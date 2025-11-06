@@ -4,7 +4,12 @@ Aplikácia v Pythone na kompresiu PDF dokumentov zo skenov. Dostupná v **deskto
 
 ## Výsledky kompresie
 
-✅ **Overené výsledky**: 100 MB → 0.58 MB (99.4% zmenšenie)
+✅ **Overené výsledky** (s Auto režimom):
+- **Test 1**: 100 MB → 0.58 MB (99.4% zmenšenie)
+- **Test 2**: 10.58 MB → 3.02 MB (71.5% zmenšenie)
+- **Test 3**: 5.58 MB → 1.34 MB (76.0% zmenšenie)
+
+**Ochrana**: Aplikácia automaticky zabráni zväčšeniu súborov - ak by kompresia zväčšila PDF, dostanete upozornenie.
 
 Ideálne pre:
 - Skenované dokumenty
@@ -27,8 +32,10 @@ Ideálne pre:
 
 ## Funkcie
 
+- **🤖 Auto režim** - Automatická optimalizácia DPI a kvality (odporúčané)
+- **🛡️ Ochrana proti zväčšeniu** - Zabráni nechcenému zväčšeniu už komprimovaných PDF
 - **Hromadné spracovanie** - Komprimuje všetky PDF súbory v adresári
-- **Nastaviteľná kompresia** - Možnosť nastaviť DPI a JPEG kvalitu
+- **Nastaviteľná kompresia** - Manuálne nastavenie DPI (100-200) a JPEG kvality (60-95)
 - **Progress indikátor** - Zobrazenie pokroku pre každý súbor
 - **Podrobný log** - Zobrazenie výsledkov kompresie
 - **Automatická detekcia Poppler** - Lokálna aj systémová inštalácia
@@ -54,10 +61,9 @@ cd compress-pdf
 pip install -r requirements.txt
 ```
 
-3. **Nainštalujte Poppler (automaticky)**
-```bash
-python install_poppler.py
-```
+3. **Nainštalujte Poppler**
+
+Pozrite si `INSTALACIA_POPPLER.md` pre podrobné inštrukcie.
 
 ### Použitie
 
@@ -75,10 +81,12 @@ python main.py
 
 ## 🌐 Web Verzia (Docker Deployment)
 
+**Živá demo**: http://compress-pdf.novis.eu (interná sieť Novis.eu)
+
 ### Požiadavky
 - Linux server (Ubuntu 20.04+, Debian 11+, CentOS 8+)
 - Docker 20.10+
-- Docker Compose 2.0+
+- Nginx (pre reverse proxy)
 - 2 GB RAM (minimum), 4 GB odporúčané
 - 10 GB voľného diskového priestoru
 
@@ -86,19 +94,33 @@ python main.py
 
 1. **Naklonujte projekt**
 ```bash
-git clone <repository-url>
+git clone https://github.com/Abra7abra7/compress-pdf.git
 cd compress-pdf
 ```
 
-2. **Spustite Docker Compose**
+2. **Buildnite Docker image**
 ```bash
-docker-compose up -d
+sudo docker build -t pdf-compressor-app .
 ```
 
-3. **Otvorte v prehliadači**
+3. **Spustite kontajner**
+```bash
+sudo docker run -d \
+  --name pdf-compressor-app \
+  --restart unless-stopped \
+  -p 5000:5000 \
+  -e SECRET_KEY=your-secret-key \
+  -e MAX_UPLOAD_SIZE=209715200 \
+  -e CLEANUP_AGE=24 \
+  pdf-compressor-app
 ```
-http://vas-server-ip
+
+4. **Otvorte v prehliadači**
 ```
+http://vas-server-ip:5000
+```
+
+Pre produkčné nasadenie s Nginx a vlastnou doménou, pozri `DEPLOYMENT.md`.
 
 ### Konfigurácia
 
@@ -120,17 +142,24 @@ Pozri `DEPLOYMENT.md` pre podrobné inštrukcie vrátane:
 
 ## Odporúčané nastavenia
 
-Pre skenované dokumenty (100 MB → 1-5 MB):
-- **DPI**: 150
-- **JPEG kvalita**: 75
+### 🤖 Auto režim (Odporúčané)
+- Zapnite checkbox "Automatická optimalizácia"
+- Aplikácia sama vyberie optimálne DPI a kvalitu
+- Nikdy nezvýši rozlíšenie (zabráni zväčšeniu súboru)
 
-Pre lepšiu kvalitu (väčšia veľkosť):
-- **DPI**: 200
-- **JPEG kvalita**: 85
+### Manuálne nastavenia
 
-Pre maximálnu kompresiu (menšia kvalita):
-- **DPI**: 100
-- **JPEG kvalita**: 60
+Pre skenované dokumenty (veľká kompresia):
+- **DPI**: 72-100
+- **JPEG kvalita**: 60-75
+
+Pre lepšiu kvalitu (stredná kompresia):
+- **DPI**: 100-150
+- **JPEG kvalita**: 75-85
+
+Pre vysokú kvalitu (minimálna kompresia):
+- **DPI**: 150-200
+- **JPEG kvalita**: 85-95
 
 ## Ako to funguje
 
@@ -141,17 +170,39 @@ Pre maximálnu kompresiu (menšia kvalita):
 
 ## Riešenie problémov
 
-### Chyba: "poppler not found"
-- Uistite sa, že Poppler je nainštalovaný a dostupný v PATH
-- Na Windows použite poppler-windows z GitHubu
+### ⚠️ Kompresia zväčšila súbor
+**Príčina**: PDF je už optimálne komprimovaný alebo má veľmi nízke DPI.
 
-### Veľká veľkosť výstupného súboru
-- Znížte DPI na 100-120
-- Znížte JPEG kvalitu na 60-70
+**Riešenie**:
+- Aplikácia automaticky zobrazí chybu a neprepíše originál
+- Použite originálny súbor (už je dobre komprimovaný)
+- Alebo skúste manuálne nastavenia s nižším DPI
+
+### Chyba: "poppler not found"
+**Riešenie**:
+- Desktop: Spustite `python install_poppler.py`
+- Linux server: `sudo apt install poppler-utils`
+- Alebo pozrite `INSTALACIA_POPPLER.md`
+
+### Veľké súbory trvajú dlho
+**Normálne**:
+- 100 MB PDF môže trvať 2-5 minút
+- Progress indikátor zobrazuje pokrok
+- Počkajte, kým sa kompresia dokončí
+
+### Blokované sťahovanie v Chrome
+**Príčina**: HTTP namiesto HTTPS.
+
+**Riešenie**:
+- Kliknite na "Ponechať nebezpečný súbor"
+- Alebo použite Firefox (menej prísny)
+- Pre produkciu nastavte HTTPS (pozri DEPLOYMENT.md)
 
 ### Chyba pri konverzii PDF
-- Skontrolujte, či sú PDF súbory nepoškodené
-- Skúste otvoriť PDF v inej aplikácii
+**Riešenie**:
+- Skontrolujte, či nie je PDF chránený heslom
+- Skúste otvoriť PDF v inom programe
+- Overte, že súbor nie je poškodený
 
 ## Porovnanie verzií
 
