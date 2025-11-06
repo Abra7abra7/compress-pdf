@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+
+# Uploads a compressed súbory
+uploads/*
+compressed/*
+!uploads/.gitkeep
+!compressed/.gitkeep
+
+# Desktop GUI súbory
+main.py
+install_poppler.py
+poppler/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation
+*.md
+!README.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Other
+.env
+*.log
+

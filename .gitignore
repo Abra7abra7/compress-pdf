@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Flask
+instance/
+.webassets-cache
+
+# Uploads a compressed súbory (dočasné)
+uploads/*
+compressed/*
+!uploads/.gitkeep
+!compressed/.gitkeep
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Poppler (lokálna inštalácia)
+poppler/
+
+# Docker volumes
+*.pid
+
+# Backup súbory
+*.bak
+*~
+
+# SSL certifikáty
+ssl/*.pem
+ssl/*.key
+ssl/*.crt
+
+# Temporary files
+*.tmp
+.cache/
+
