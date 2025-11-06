@@ -21,7 +21,7 @@ class PDFCompressorGUI:
         # Premenné
         self.input_dir = tk.StringVar()
         self.output_dir = tk.StringVar()
-        self.dpi = tk.IntVar(value=150)
+        self.dpi = tk.IntVar(value=100)
         self.jpeg_quality = tk.IntVar(value=75)
         self.is_processing = False
         
@@ -72,7 +72,7 @@ class PDFCompressorGUI:
             length=300
         )
         dpi_scale.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
-        self.dpi_label = ttk.Label(dpi_frame, text="150")
+        self.dpi_label = ttk.Label(dpi_frame, text="100")
         self.dpi_label.pack(side=tk.LEFT)
         dpi_scale.configure(command=self.update_dpi_label)
         

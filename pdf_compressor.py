@@ -39,6 +39,57 @@ def find_poppler_path() -> Optional[str]:
     return None
 
 
+def get_pdf_dpi(pdf_path: str, poppler_path: Optional[str] = None) -> int:
+    """
+    Detekuje približné DPI originálneho PDF súboru.
+    Konvertuje prvú stránku a odhaduje na základe veľkosti obrázka.
+    
+    Args:
+        pdf_path: Cesta k PDF súboru
+        poppler_path: Voliteľná cesta k Poppler binárke
+    
+    Returns:
+        Odhadované DPI (72-600)
+    """
+    try:
+        # Konverzia prvej stránky na štandardných 200 DPI
+        if poppler_path:
+            images = convert_from_path(pdf_path, dpi=200, first_page=1, last_page=1, poppler_path=poppler_path)
+        else:
+            images = convert_from_path(pdf_path, dpi=200, first_page=1, last_page=1)
+        
+        if len(images) == 0:
+            return 150  # Default hodnota
+        
+        # Zistíme veľkosť obrázka pri 200 DPI
+        img = images[0]
+        width_200, height_200 = img.size
+        
+        # Pri 200 DPI platí: veľkosť v pixeloch / 200 = veľkosť v palcoch
+        # Ak je obrázok napr. 1700x2200px pri 200 DPI, veľkosť papiera je 8.5x11 palcov (A4: ~8.3x11.7)
+        
+        # Odhad: ak je obrázok približne A4 (8.3 x 11.7 palcov), 
+        # potom pri 200 DPI by mal byť ~1660 x 2340 pixelov
+        # Ak je väčší/menší, originálne DPI je vyššie/nižšie
+        
+        # Jednoduchý výpočet: predpokladáme A4 šírku (~8.3 palcov)
+        estimated_inches = 8.3  # A4 šírka
+        original_dpi = int(width_200 / estimated_inches)
+        
+        # Obmedzíme na rozumné hodnoty
+        if original_dpi < 72:
+            return 72
+        elif original_dpi > 600:
+            return 600
+        else:
+            # Zaokrúhlime na najbližších 50
+            return round(original_dpi / 50) * 50
+            
+    except Exception as e:
+        # Pri chybe vrátime default hodnotu
+        return 150
+
+
 def check_poppler_installed() -> Tuple[bool, str, Optional[str]]:
     """
     Kontroluje, či je Poppler nainštalovaný a dostupný.
@@ -100,7 +151,7 @@ def check_poppler_installed() -> Tuple[bool, str, Optional[str]]:
 def compress_pdf(
     input_path: str,
     output_path: str,
-    dpi: int = 150,
+    dpi: int = 100,
     jpeg_quality: int = 75,
     progress_callback: Optional[callable] = None
 ) -> tuple[bool, str]:
@@ -110,8 +161,8 @@ def compress_pdf(
     Args:
         input_path: Cesta k vstupnému PDF súboru
         output_path: Cesta k výstupnému PDF súboru
-        dpi: Výstupné DPI (100-200)
-        jpeg_quality: Kvalita JPEG kompresie (1-100)
+        dpi: Výstupné DPI (100-200, alebo 0 pre auto)
+        jpeg_quality: Kvalita JPEG kompresie (1-100, alebo 0 pre auto)
         progress_callback: Funkcia na volanie s pokrokom (file_name, progress)
     
     Returns:
@@ -125,15 +176,38 @@ def compress_pdf(
         if not os.path.exists(input_path):
             return False, f"Vstupný súbor neexistuje: {input_path}"
         
+        # Skúsime použiť lokálnu cestu k Poppler ak existuje
+        poppler_check = check_poppler_installed()
+        poppler_path = poppler_check[2] if len(poppler_check) > 2 else None
+        
+        # AUTO režim - inteligentná kompresia
+        if dpi == 0:  # 0 znamená auto
+            if progress_callback:
+                progress_callback(os.path.basename(input_path), 5)
+            
+            # Detekujeme originálne DPI
+            try:
+                original_dpi = get_pdf_dpi(input_path, poppler_path)
+                # Použijeme NIŽŠIE z dvoch hodnôt (nikdy nezvyšujeme DPI!)
+                target_dpi = 72  # Naša preferovaná hodnota
+                dpi = min(original_dpi, target_dpi)
+                
+                # Minimálne 50 DPI pre čitateľnosť
+                if dpi < 50:
+                    dpi = 50
+            except:
+                # Ak detekcia zlyhá, použijeme konzervatívne 72 DPI
+                dpi = 72
+        
+        # AUTO režim pre kvalitu
+        if jpeg_quality == 0:  # 0 znamená auto
+            jpeg_quality = 60  # Nižšia kvalita = menší súbor
+        
         # Konverzia PDF na obrázky
         if progress_callback:
             progress_callback(os.path.basename(input_path), 10)
         
         try:
-            # Skúsime použiť lokálnu cestu k Poppler ak existuje
-            poppler_check = check_poppler_installed()
-            poppler_path = poppler_check[2] if len(poppler_check) > 2 else None
-            
             if poppler_path:
                 images = convert_from_path(input_path, dpi=dpi, poppler_path=poppler_path)
             else:
@@ -151,8 +225,8 @@ def compress_pdf(
         if progress_callback:
             progress_callback(os.path.basename(input_path), 30)
         
-        # Kompresia každého obrázka
-        compressed_images = []
+        # Vytvorenie dočasných JPEG súborov
+        temp_files = []
         total_pages = len(images)
         
         for i, image in enumerate(images):
@@ -160,17 +234,13 @@ def compress_pdf(
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             
-            # Vytvorenie dočasného súboru v pamäti
-            from io import BytesIO
-            img_buffer = BytesIO()
+            # Vytvorenie dočasného JPEG súboru
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+            temp_file.close()
             
-            # Uloženie s JPEG kompresiou
-            image.save(img_buffer, format='JPEG', quality=jpeg_quality, optimize=True)
-            img_buffer.seek(0)
-            
-            # Načítanie späť do PIL Image
-            compressed_img = Image.open(img_buffer)
-            compressed_images.append(compressed_img)
+            # Priame uloženie s JPEG kompresiou
+            image.save(temp_file.name, 'JPEG', quality=jpeg_quality, optimize=True)
+            temp_files.append(temp_file.name)
             
             if progress_callback:
                 progress = 30 + int((i + 1) / total_pages * 50)
@@ -184,23 +254,11 @@ def compress_pdf(
         if progress_callback:
             progress_callback(os.path.basename(input_path), 85)
         
-        # Konverzia obrázkov späť na PDF
-        # Použijeme img2pdf ak je dostupný, inak PIL Image.save()
-        temp_files = []
+        # Konverzia JPEG súborov späť na PDF pomocou img2pdf
         pdf_created = False
         
         try:
             if IMG2PDF_AVAILABLE:
-                # Vytvorenie dočasných JPEG súborov pre img2pdf
-                for idx, img in enumerate(compressed_images):
-                    try:
-                        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
-                        img.save(temp_file.name, 'JPEG', quality=jpeg_quality, optimize=True)
-                        temp_files.append(temp_file.name)
-                        temp_file.close()
-                    except Exception as e:
-                        raise Exception(f"Chyba pri vytváraní dočasného súboru pre obrázok {idx+1}: {str(e)}")
-                
                 # Konverzia do PDF pomocou img2pdf
                 try:
                     pdf_bytes = img2pdf.convert(temp_files)
@@ -212,8 +270,11 @@ def compress_pdf(
             else:
                 # Fallback na PIL Image.save() ak img2pdf nie je dostupný
                 try:
-                    if len(compressed_images) == 1:
-                        compressed_images[0].save(
+                    # Načítanie JPEG súborov späť ako obrázky
+                    pil_images = [Image.open(f) for f in temp_files]
+                    
+                    if len(pil_images) == 1:
+                        pil_images[0].save(
                             output_path,
                             'PDF',
                             resolution=dpi,
@@ -221,12 +282,12 @@ def compress_pdf(
                             optimize=True
                         )
                     else:
-                        compressed_images[0].save(
+                        pil_images[0].save(
                             output_path,
                             'PDF',
                             resolution=dpi,
                             save_all=True,
-                            append_images=compressed_images[1:],
+                            append_images=pil_images[1:],
                             quality=jpeg_quality,
                             optimize=True
                         )
@@ -244,7 +305,7 @@ def compress_pdf(
             raise e
         
         finally:
-            # Vymazanie dočasných súborov
+            # Vymazanie dočasných JPEG súborov
             for temp_file in temp_files:
                 try:
                     if os.path.exists(temp_file):
@@ -269,6 +330,23 @@ def compress_pdf(
         
         original_size = os.path.getsize(input_path) / (1024 * 1024)  # MB
         compressed_size = output_size / (1024 * 1024)  # MB
+        
+        # OCHRANA: Ak je komprimovaný súbor väčší ako originál, vrátime chybu
+        if output_size > os.path.getsize(input_path):
+            # Vymazanie zbytočne veľkého výstupného súboru
+            try:
+                os.unlink(output_path)
+            except:
+                pass
+            
+            return False, (
+                f"⚠️ Kompresia by zväčšila súbor! "
+                f"Originál: {original_size:.2f} MB, "
+                f"Po kompresii: {compressed_size:.2f} MB. "
+                f"Tento PDF je už pravdepodobne dobre komprimovaný. "
+                f"Použite originálny súbor."
+            )
+        
         compression_ratio = (1 - compressed_size / original_size) * 100
         
         return True, f"Úspešne komprimované: {original_size:.2f} MB → {compressed_size:.2f} MB ({compression_ratio:.1f}% zmenšenie)"

@@ -34,12 +34,21 @@
                 <div class="settings">
                     <h3>Nastavenia kompresie</h3>
                     
+                    <!-- Auto režim -->
+                    <div class="setting-group auto-mode">
+                        <label class="auto-checkbox">
+                            <input type="checkbox" id="autoMode" checked>
+                            <span>🤖 Automatická optimalizácia</span>
+                        </label>
+                        <p class="auto-hint">Automaticky vyberie najlepšie nastavenia pre váš PDF</p>
+                    </div>
+                    
                     <div class="setting-group">
                         <label for="dpiRange">
                             DPI (Rozlíšenie):
-                            <span id="dpiValue" class="setting-value">150</span>
+                            <span id="dpiValue" class="setting-value">100</span>
                         </label>
-                        <input type="range" id="dpiRange" min="100" max="200" value="150" step="10">
+                        <input type="range" id="dpiRange" min="100" max="200" value="100" step="10" disabled>
                         <div class="setting-hint">
                             <span>Nižšie = menší súbor</span>
                             <span>Vyššie = lepšia kvalita</span>
@@ -51,7 +60,7 @@
                             JPEG Kvalita:
                             <span id="qualityValue" class="setting-value">75</span>
                         </label>
-                        <input type="range" id="qualityRange" min="60" max="95" value="75" step="5">
+                        <input type="range" id="qualityRange" min="60" max="95" value="75" step="5" disabled>
                         <div class="setting-hint">
                             <span>Nižšie = menší súbor</span>
                             <span>Vyššie = lepšia kvalita</span>

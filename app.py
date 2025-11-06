@@ -88,14 +88,14 @@ def upload_file():
     
     # Získanie parametrov
     try:
-        dpi = int(request.form.get('dpi', 150))
+        dpi = int(request.form.get('dpi', 100))
         jpeg_quality = int(request.form.get('quality', 75))
         
-        # Validácia parametrov
-        if not (100 <= dpi <= 200):
-            return jsonify({'error': 'DPI musí byť medzi 100 a 200'}), 400
-        if not (60 <= jpeg_quality <= 95):
-            return jsonify({'error': 'JPEG kvalita musí byť medzi 60 a 95'}), 400
+        # Validácia parametrov (0 = auto režim)
+        if dpi != 0 and not (100 <= dpi <= 200):
+            return jsonify({'error': 'DPI musí byť medzi 100 a 200, alebo 0 pre auto'}), 400
+        if jpeg_quality != 0 and not (60 <= jpeg_quality <= 95):
+            return jsonify({'error': 'JPEG kvalita musí byť medzi 60 a 95, alebo 0 pre auto'}), 400
     except ValueError:
         return jsonify({'error': 'Neplatné parametre DPI alebo kvality'}), 400
     

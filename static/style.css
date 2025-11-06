@@ -379,6 +379,57 @@ input[type="range"]::-moz-range-thumb {
     margin-bottom: 1rem;
 }
 
+/* Auto režim */
+.auto-mode {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #0ea5e9;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.auto-checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #0369a1;
+}
+
+.auto-checkbox input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.75rem;
+    cursor: pointer;
+}
+
+.auto-checkbox span {
+    user-select: none;
+}
+
+.auto-hint {
+    margin-top: 0.5rem;
+    margin-left: 2rem;
+    font-size: 0.875rem;
+    color: #0369a1;
+    font-style: italic;
+}
+
+/* Disabled slidery */
+.setting-group input[type="range"]:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.setting-group input[type="range"]:disabled + .setting-hint {
+    opacity: 0.4;
+}
+
+.setting-group label:has(input[type="range"]:disabled) {
+    opacity: 0.6;
+}
+
 /* Footer */
 footer {
     text-align: center;

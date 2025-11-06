@@ -9,10 +9,26 @@ const fileInput = document.getElementById('fileInput');
 const progressSection = document.getElementById('progressSection');
 const resultSection = document.getElementById('resultSection');
 const errorSection = document.getElementById('errorSection');
+const autoMode = document.getElementById('autoMode');
 const dpiRange = document.getElementById('dpiRange');
 const qualityRange = document.getElementById('qualityRange');
 const dpiValue = document.getElementById('dpiValue');
 const qualityValue = document.getElementById('qualityValue');
+
+// Auto režim handling
+autoMode.addEventListener('change', (e) => {
+    const isAuto = e.target.checked;
+    dpiRange.disabled = isAuto;
+    qualityRange.disabled = isAuto;
+    
+    if (isAuto) {
+        dpiRange.parentElement.style.opacity = '0.6';
+        qualityRange.parentElement.style.opacity = '0.6';
+    } else {
+        dpiRange.parentElement.style.opacity = '1';
+        qualityRange.parentElement.style.opacity = '1';
+    }
+});
 
 // Nastavenia range sliderov
 dpiRange.addEventListener('input', (e) => {
@@ -91,8 +107,15 @@ async function uploadFile(file) {
     // Pripravenie FormData
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('dpi', dpiRange.value);
-    formData.append('quality', qualityRange.value);
+    
+    // Ak je zapnutý auto režim, pošleme 0 (čo backend rozpozná ako auto)
+    if (autoMode.checked) {
+        formData.append('dpi', '0');
+        formData.append('quality', '0');
+    } else {
+        formData.append('dpi', dpiRange.value);
+        formData.append('quality', qualityRange.value);
+    }
     
     try {
         // Upload request
@@ -200,10 +223,15 @@ function resetUpload() {
 
 // Reset nastavení
 function resetSettings() {
-    dpiRange.value = 150;
+    autoMode.checked = true;
+    dpiRange.value = 100;
     qualityRange.value = 75;
-    dpiValue.textContent = '150';
+    dpiValue.textContent = '100';
     qualityValue.textContent = '75';
+    dpiRange.disabled = true;
+    qualityRange.disabled = true;
+    dpiRange.parentElement.style.opacity = '0.6';
+    qualityRange.parentElement.style.opacity = '0.6';
 }
 
 // Inicializácia
