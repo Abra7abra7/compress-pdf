@@ -28,16 +28,20 @@ Ideálne pre:
 - Prístup cez webový prehliadač (URL)
 - Centralizovaný deployment pre firmy/tímy
 - Podpora 10-100 simultánnych používateľov
+- **Hromadné spracovanie: 10-50 PDF súborov naraz**
+- **Maximum 600 MB na súbor**
 - Jednoduchá údržba a aktualizácie
 
 ## Funkcie
 
+- **📦 Batch Upload** - Nahrajte 10-50 PDF súborov naraz
 - **🤖 Auto režim** - Automatická optimalizácia DPI a kvality (odporúčané)
 - **🛡️ Ochrana proti zväčšeniu** - Zabráni nechcenému zväčšeniu už komprimovaných PDF
-- **Hromadné spracovanie** - Komprimuje všetky PDF súbory v adresári
+- **Hromadné spracovanie** - Komprimuje všetky PDF súbory súčasne
+- **💪 Veľké súbory** - Podpora súborov až do 600 MB
 - **Nastaviteľná kompresia** - Manuálne nastavenie DPI (100-200) a JPEG kvality (60-95)
-- **Progress indikátor** - Zobrazenie pokroku pre každý súbor
-- **Podrobný log** - Zobrazenie výsledkov kompresie
+- **Progress indikátor** - Zobrazenie pokroku pre každý súbor samostatne
+- **Podrobný log** - Zobrazenie výsledkov kompresie s možnosťou stiahnutia každého súboru
 - **Automatická detekcia Poppler** - Lokálna aj systémová inštalácia
 
 ---
@@ -87,8 +91,8 @@ python main.py
 - Linux server (Ubuntu 20.04+, Debian 11+, CentOS 8+)
 - Docker 20.10+
 - Nginx (pre reverse proxy)
-- 2 GB RAM (minimum), 4 GB odporúčané
-- 10 GB voľného diskového priestoru
+- 4 GB RAM (minimum), 8 GB odporúčané pre batch processing
+- 20 GB voľného diskového priestoru
 
 ### Rýchle spustenie
 
@@ -124,10 +128,16 @@ Pre produkčné nasadenie s Nginx a vlastnou doménou, pozri `DEPLOYMENT.md`.
 
 ### Konfigurácia
 
-Upravte `docker-compose.yml` pre vlastné nastavenia:
-- **MAX_UPLOAD_SIZE**: Maximálna veľkosť nahrávaného súboru (default: 200 MB)
+Vytvorte `.env` súbor (skopírujte z `.env.example`):
+```bash
+cp .env.example .env
+nano .env
+```
+
+Dostupné nastavenia:
+- **SECRET_KEY**: Flask secret key (použite silné heslo!)
+- **MAX_UPLOAD_SIZE**: Maximálna veľkosť nahrávaného súboru (default: 600 MB)
 - **CLEANUP_AGE**: Čas po ktorom sa vymažú staré súbory (default: 24 hodín)
-- **PORT**: Port na ktorom beží aplikácia (default: 80)
 
 ### Produkčný deployment
 

@@ -22,11 +22,11 @@
                         <polyline points="17 8 12 3 7 8"/>
                         <line x1="12" y1="3" x2="12" y2="15"/>
                     </svg>
-                    <h2>Nahrajte PDF súbor</h2>
-                    <p>Presuňte súbor sem alebo kliknite na výber</p>
-                    <input type="file" id="fileInput" accept=".pdf" hidden>
-                    <button class="btn-primary" onclick="document.getElementById('fileInput').click()">Vybrať súbor</button>
-                    <p class="file-limit">Maximum: 200 MB</p>
+                    <h2>Nahrajte PDF súbory</h2>
+                    <p>Presuňte súbory sem alebo kliknite na výber (max 50 súborov)</p>
+                    <input type="file" id="fileInput" accept=".pdf" multiple hidden>
+                    <button class="btn-primary" onclick="document.getElementById('fileInput').click()">Vybrať súbory</button>
+                    <p class="file-limit">Maximum: 600 MB na súbor</p>
                 </div>
 
                 <!-- Nastavenia -->
@@ -72,16 +72,12 @@
 
             <!-- Progress sekcia -->
             <section class="progress-section" id="progressSection" style="display: none;">
-                <h3>Spracovanie súboru</h3>
-                <div class="file-item">
-                    <div class="file-info">
-                        <span class="file-name" id="fileName"></span>
-                        <span class="file-status" id="fileStatus">Pripravuje sa...</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
-                    </div>
-                    <div class="progress-text" id="progressText">0%</div>
+                <h3>Spracovanie súborov</h3>
+                <div class="batch-summary" id="batchSummary">
+                    <span id="batchProgress">0 / 0 súborov dokončených</span>
+                </div>
+                <div id="filesList" class="files-list">
+                    <!-- Súbory sa pridajú dynamicky cez JavaScript -->
                 </div>
             </section>
 
@@ -90,29 +86,15 @@
                 <div class="result-card success" id="resultCard">
                     <div class="result-icon">✓</div>
                     <h3>Kompresia dokončená!</h3>
-                    <div class="result-stats">
-                        <div class="stat">
-                            <span class="stat-label">Pôvodná veľkosť:</span>
-                            <span class="stat-value" id="originalSize">-</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-label">Komprimovaná veľkosť:</span>
-                            <span class="stat-value" id="compressedSize">-</span>
-                        </div>
-                        <div class="stat">
-                            <span class="stat-label">Zmenšenie:</span>
-                            <span class="stat-value stat-highlight" id="compressionRatio">-</span>
-                        </div>
+                    <div class="batch-summary-result" id="batchSummaryResult">
+                        <p><strong>Celkovo spracovaných:</strong> <span id="totalProcessed">0</span> súborov</p>
+                        <p><strong>Úspešných:</strong> <span id="totalSuccess">0</span></p>
+                        <p><strong>Zlyhalo:</strong> <span id="totalFailed">0</span></p>
                     </div>
-                    <button class="btn-success" id="downloadBtn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7 10 12 15 17 10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                        Stiahnuť komprimovaný PDF
-                    </button>
-                    <button class="btn-secondary" onclick="resetUpload()">Komprimovať ďalší súbor</button>
+                    <div id="resultsFilesList" class="results-files-list">
+                        <!-- Výsledky pre každý súbor sa pridajú dynamicky -->
+                    </div>
+                    <button class="btn-secondary" onclick="resetUpload()">Komprimovať ďalšie súbory</button>
                 </div>
             </section>
 

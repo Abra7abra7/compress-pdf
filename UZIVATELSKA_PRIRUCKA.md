@@ -28,37 +28,50 @@ Aplikácia je dostupná z **firemnej siete Novis.eu** cez akýkoľvek webový pr
 
 ### Krok za krokom
 
-#### 1. **Nahrajte PDF súbor**
+#### 1. **Nahrajte PDF súbory**
+
+**NOVÁ FUNKCIA**: Môžete nahrať **10-50 PDF súborov naraz**!
 
 Máte 3 možnosti:
 
-**A) Drag & Drop** (najjednoduchšie)
-- Potiahnte PDF súbor z vášho počítača
-- Pustite ho na šedú plochu s nápisom "Nahrajte PDF súbor"
+**A) Drag & Drop - Viacero súborov** (najjednoduchšie)
+- Vyberte viacero PDF súborov v priečinku (Ctrl+klik alebo Shift+klik)
+- Potiahnte ich na šedú plochu s nápisom "Nahrajte PDF súbory"
+- Pustite ich
 
-**B) Kliknutím**
-- Kliknite na tlačidlo "Vybrať súbor"
-- V okne vyberte PDF súbor z vášho počítača
+**B) Kliknutím - Viacero súborov**
+- Kliknite na tlačidlo "Vybrať súbory"
+- V okne vyberte jeden alebo viacero PDF súborov (Ctrl+klik)
+- Kliknite "Otvoriť"
 
-**C) Priamo z priečinka**
-- Kliknite pravým na PDF súbor
-- Vyberte "Otvoriť pomocou" → Váš prehliadač
+**C) Jeden súbor**
+- Potiahnte jeden PDF súbor
+- Alebo vyberte jeden súbor cez "Vybrať súbory"
 
 #### 2. **Počkajte na spracovanie**
 
+**Pri jednom súbore:**
 - Uvidíte progress bar (modrý prúžok)
 - Zobrazí sa "Spracovanie súboru"
-- **Nebudete vidieť percentá**, ale súbor sa spracováva na pozadí
+- Percentá sa aktualizujú v reálnom čase
+
+**Pri viacerých súboroch:**
+- Uvidíte zoznam všetkých súborov
+- Každý súbor má svoj vlastný progress bar
+- V záhlaví vidíte celkový pokrok (napr. "5 / 10 súborov dokončených")
+- Súbory sa spracovávajú **paralelne** (súčasne)
 
 **Ako dlho to trvá?**
 - Malý súbor (1-10 MB): 10-30 sekúnd
 - Stredný súbor (10-50 MB): 30-120 sekúnd  
-- Veľký súbor (50-200 MB): 2-5 minút
+- Veľký súbor (50-600 MB): 2-10 minút
+- **10 súborov (po 50 MB)**: cca 3-5 minút (paralelné spracovanie)
 
 💡 **Tip**: Počkajte trpezlivo - nezatvárajte okno prehliadača!
 
-#### 3. **Stiahnite skomprimovaný súbor**
+#### 3. **Stiahnite skomprimované súbory**
 
+**Pri jednom súbore:**
 Po dokončení uvidíte:
 - ✅ Zelená fajka "Kompresia dokončená!"
 - **Pôvodná veľkosť**: napr. 10.58 MB
@@ -67,9 +80,24 @@ Po dokončení uvidíte:
 
 Kliknite na zelené tlačidlo **"Stiahnuť komprimovaný PDF"**.
 
-#### 4. **Komprimujte ďalší súbor**
+**Pri viacerých súboroch:**
+Po dokončení uvidíte:
+- ✅ Zelená fajka "Kompresia dokončená!"
+- **Celkovo spracovaných**: napr. 10 súborov
+- **Úspešných**: napr. 9
+- **Zlyhalo**: napr. 1
 
-Kliknite na "Komprimovať ďalší súbor" a opakujte proces.
+Zoznam každého súboru s:
+- ✅ Zelená fajka = Úspech
+- ✗ Červený krížik = Chyba
+- Pôvodná a komprimovaná veľkosť
+- Tlačidlo **"Stiahnuť"** pre každý úspešne komprimovaný súbor
+
+💡 **Tip**: Stiahnite si každý súbor samostatne kliknutím na "Stiahnuť".
+
+#### 4. **Komprimujte ďalšie súbory**
+
+Kliknite na "Komprimovať ďalšie súbory" a opakujte proces.
 
 ---
 
@@ -235,7 +263,11 @@ Použite originálny súbor.
 ## Limity a obmedzenia
 
 ### Maximálna veľkosť súboru
-- **200 MB** - väčšie súbory nebudú prijaté
+- **600 MB na súbor** - väčšie súbory nebudú prijaté
+
+### Maximálny počet súborov naraz
+- **50 PDF súborov naraz** pri batch uploade
+- Minimálne 1 súbor
 
 ### Podporované formáty
 - ✅ **PDF** (.pdf)
@@ -244,11 +276,8 @@ Použite originálny súbor.
 - ❌ **Obrázky** (.jpg, .png)
 
 ### Čas spracovania
-- **Maximum**: 10 minút na súbor
-- Po 10 minútach sa spracovanie preruší
-
-### Počet súborov
-- **1 súbor naraz** (nie batch)
+- **Maximum**: 20 minút na batch
+- Pri batch uploade sa súbory spracovávajú paralelne
 
 ---
 

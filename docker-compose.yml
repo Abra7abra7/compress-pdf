@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
     environment:
       - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production}
-      - MAX_UPLOAD_SIZE=${MAX_UPLOAD_SIZE:-209715200}  # 200 MB
+      - MAX_UPLOAD_SIZE=${MAX_UPLOAD_SIZE:-629145600}  # 600 MB
       - CLEANUP_AGE=${CLEANUP_AGE:-24}  # 24 hodín
     volumes:
       - ./uploads:/app/uploads

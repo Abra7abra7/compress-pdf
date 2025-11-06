@@ -46,8 +46,9 @@ Docker kontajner
 
 ### Tok dát
 
+#### Single File Upload
 ```
-1. Upload PDF (max 200 MB)
+1. Upload PDF (max 600 MB)
    ↓
 2. Uloženie do /app/uploads/
    ↓
@@ -61,6 +62,26 @@ Docker kontajner
 5. Stiahnutie používateľom
    ↓
 6. Cleanup (po 24h): Vymazanie dočasných súborov
+```
+
+#### Batch Upload (10-50 súborov)
+```
+1. Upload viacerých PDF súborov (každý max 600 MB)
+   ↓
+2. Vytvorenie batch_id pre celý batch
+   ↓
+3. Pre každý súbor:
+   a) Vytvorenie job_id
+   b) Uloženie do /app/uploads/
+   c) Spustenie kompresie v samostatnom vlákne (paralelne)
+   ↓
+4. Sledovanie pokroku všetkých súborov cez /batch_progress/<batch_id>
+   ↓
+5. Uloženie komprimovaných súborov do /app/compressed/
+   ↓
+6. Zobrazenie výsledkov s možnosťou individuálneho stiahnutia
+   ↓
+7. Cleanup (po 24h): Vymazanie dočasných súborov
 ```
 
 ---
@@ -169,7 +190,7 @@ sudo docker exec pdf-compressor-app rm -rf /app/uploads/* /app/compressed/*
 -e SECRET_KEY=pdf-kompressor-secret-key-2024
 
 # MAX_UPLOAD_SIZE - Max veľkosť uploadovaného súboru (v bajtoch)
--e MAX_UPLOAD_SIZE=209715200  # 200 MB
+-e MAX_UPLOAD_SIZE=629145600  # 600 MB
 
 # CLEANUP_AGE - Vek súborov pred vymazaním (v hodinách)
 -e CLEANUP_AGE=24  # 24 hodín
@@ -190,7 +211,7 @@ sudo docker exec pdf-compressor-app rm -rf /app/uploads/* /app/compressed/*
      --restart unless-stopped \
      -p 5000:5000 \
      -e SECRET_KEY=novy-secret-key \
-     -e MAX_UPLOAD_SIZE=524288000 \  # 500 MB
+     -e MAX_UPLOAD_SIZE=629145600 \  # 600 MB
      -e CLEANUP_AGE=48 \  # 48 hodín
      pdf-compressor-app
    ```
@@ -204,18 +225,18 @@ server {
     listen 80;
     server_name compress-pdf.novis.eu;
 
-    client_max_body_size 200M;  # ← Zmeňte pre iný limit
+    client_max_body_size 600M;  # ← Pre batch upload
 
     location / {
         proxy_pass http://localhost:5000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         
-        # Timeouts pre veľké súbory
-        proxy_connect_timeout 600;  # ← 10 minút
-        proxy_send_timeout 600;
-        proxy_read_timeout 600;
-        send_timeout 600;
+        # Timeouts pre veľké batch uploady
+        proxy_connect_timeout 1200;  # ← 20 minút
+        proxy_send_timeout 1200;
+        proxy_read_timeout 1200;
+        send_timeout 1200;
     }
 }
 ```

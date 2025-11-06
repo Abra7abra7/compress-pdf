@@ -1,7 +1,8 @@
 // PDF Kompresor - JavaScript
 
-let currentJobId = null;
-let currentOutputFile = null;
+let currentBatchId = null;
+let currentJobIds = [];
+let selectedFiles = [];
 
 // DOM elementy
 const uploadArea = document.getElementById('uploadArea');
@@ -53,9 +54,9 @@ uploadArea.addEventListener('drop', (e) => {
     e.preventDefault();
     uploadArea.classList.remove('drag-over');
     
-    const files = e.dataTransfer.files;
+    const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
-        handleFileSelect(files[0]);
+        handleFileSelect(files);
     }
 });
 
@@ -66,31 +67,52 @@ uploadArea.addEventListener('click', () => {
 // File input change
 fileInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
-        handleFileSelect(e.target.files[0]);
+        handleFileSelect(Array.from(e.target.files));
     }
 });
 
-// Spracovanie vybraného súboru
-function handleFileSelect(file) {
-    // Validácia typu súboru
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
-        showError('Povolené sú len PDF súbory!');
+// Spracovanie vybraných súborov
+function handleFileSelect(files) {
+    // Validácia počtu súborov
+    const maxFiles = 50;
+    if (files.length > maxFiles) {
+        showError(`Môžete vybrať maximálne ${maxFiles} súborov naraz!`);
         return;
     }
     
-    // Validácia veľkosti súboru (200 MB)
-    const maxSize = 200 * 1024 * 1024;
-    if (file.size > maxSize) {
-        showError(`Súbor je príliš veľký! Maximum: ${maxSize / (1024*1024)} MB`);
+    // Validácia typu a veľkosti súborov
+    const maxSize = 600 * 1024 * 1024; // 600 MB
+    const invalidFiles = [];
+    const tooLargeFiles = [];
+    
+    for (const file of files) {
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            invalidFiles.push(file.name);
+        }
+        if (file.size > maxSize) {
+            tooLargeFiles.push(file.name);
+        }
+    }
+    
+    if (invalidFiles.length > 0) {
+        showError(`Neplatné súbory (nie PDF): ${invalidFiles.join(', ')}`);
         return;
     }
+    
+    if (tooLargeFiles.length > 0) {
+        showError(`Príliš veľké súbory (max 600 MB): ${tooLargeFiles.join(', ')}`);
+        return;
+    }
+    
+    // Uloženie vybraných súborov
+    selectedFiles = files;
     
     // Spustenie uploadu
-    uploadFile(file);
+    uploadFiles(files);
 }
 
-// Upload súboru
-async function uploadFile(file) {
+// Upload súborov
+async function uploadFiles(files) {
     // Skryť upload sekciu, zobraziť progress
     uploadArea.style.display = 'none';
     document.querySelector('.settings').style.display = 'none';
@@ -98,15 +120,13 @@ async function uploadFile(file) {
     resultSection.style.display = 'none';
     errorSection.style.display = 'none';
     
-    // Nastavenie progress
-    document.getElementById('fileName').textContent = file.name;
-    document.getElementById('fileStatus').textContent = 'Nahráva sa...';
-    document.getElementById('progressFill').style.width = '0%';
-    document.getElementById('progressText').textContent = '0%';
-    
     // Pripravenie FormData
     const formData = new FormData();
-    formData.append('file', file);
+    
+    // Pridanie všetkých súborov
+    for (const file of files) {
+        formData.append('files', file);
+    }
     
     // Ak je zapnutý auto režim, pošleme 0 (čo backend rozpozná ako auto)
     if (autoMode.checked) {
@@ -115,6 +135,26 @@ async function uploadFile(file) {
     } else {
         formData.append('dpi', dpiRange.value);
         formData.append('quality', qualityRange.value);
+    }
+    
+    // Vytvorenie progress UI pre každý súbor
+    const filesList = document.getElementById('filesList');
+    filesList.innerHTML = '';
+    
+    for (const file of files) {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+            <div class="file-info">
+                <span class="file-name">${file.name}</span>
+                <span class="file-status">Čaká sa...</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="progress-text">0%</div>
+        `;
+        filesList.appendChild(fileItem);
     }
     
     try {
@@ -126,27 +166,27 @@ async function uploadFile(file) {
         
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.error || 'Chyba pri nahrávaní súboru');
+            throw new Error(error.error || 'Chyba pri nahrávaní súborov');
         }
         
         const data = await response.json();
-        currentJobId = data.job_id;
+        currentBatchId = data.batch_id;
+        currentJobIds = data.job_ids;
         
         // Sledovanie pokroku
-        document.getElementById('fileStatus').textContent = 'Komprimuje sa...';
-        pollProgress();
+        pollBatchProgress();
         
     } catch (error) {
         showError(error.message);
     }
 }
 
-// Sledovanie pokroku kompresie
-async function pollProgress() {
-    if (!currentJobId) return;
+// Sledovanie pokroku batch kompresie
+async function pollBatchProgress() {
+    if (!currentBatchId) return;
     
     try {
-        const response = await fetch(`/progress/${currentJobId}`);
+        const response = await fetch(`/batch_progress/${currentBatchId}`);
         
         if (!response.ok) {
             throw new Error('Chyba pri získavaní pokroku');
@@ -154,21 +194,56 @@ async function pollProgress() {
         
         const data = await response.json();
         
-        // Update progress
-        const progress = Math.round(data.progress);
-        document.getElementById('progressFill').style.width = `${progress}%`;
-        document.getElementById('progressText').textContent = `${progress}%`;
+        // Update batch summary
+        const completed = data.completed + data.failed;
+        const total = data.total_files;
+        document.getElementById('batchProgress').textContent = `${completed} / ${total} súborov dokončených`;
         
-        if (data.status === 'completed') {
-            // Kompresia dokončená
-            currentOutputFile = data.output_file;
-            showResult(data);
-        } else if (data.status === 'error') {
-            // Chyba
-            showError(data.error || 'Neznáma chyba pri kompresii');
+        // Update individual file progress
+        const filesList = document.getElementById('filesList');
+        const fileItems = filesList.querySelectorAll('.file-item');
+        
+        let index = 0;
+        for (const jobId in data.files) {
+            const fileData = data.files[jobId];
+            const fileItem = fileItems[index];
+            
+            if (fileItem) {
+                const statusSpan = fileItem.querySelector('.file-status');
+                const progressFill = fileItem.querySelector('.progress-fill');
+                const progressText = fileItem.querySelector('.progress-text');
+                
+                // Update status text
+                if (fileData.status === 'pending') {
+                    statusSpan.textContent = 'Čaká sa...';
+                    statusSpan.className = 'file-status status-pending';
+                } else if (fileData.status === 'processing') {
+                    statusSpan.textContent = 'Spracováva sa...';
+                    statusSpan.className = 'file-status status-processing';
+                } else if (fileData.status === 'completed') {
+                    statusSpan.textContent = '✓ Hotovo';
+                    statusSpan.className = 'file-status status-completed';
+                } else if (fileData.status === 'error') {
+                    statusSpan.textContent = '✗ Chyba';
+                    statusSpan.className = 'file-status status-error';
+                }
+                
+                // Update progress bar
+                const progress = Math.round(fileData.progress);
+                progressFill.style.width = `${progress}%`;
+                progressText.textContent = `${progress}%`;
+            }
+            
+            index++;
+        }
+        
+        // Check if all files are done
+        if (completed >= total) {
+            // Všetky súbory dokončené
+            showBatchResults(data);
         } else {
             // Pokračovať v sledovaní
-            setTimeout(pollProgress, 500);
+            setTimeout(pollBatchProgress, 500);
         }
         
     } catch (error) {
@@ -176,19 +251,55 @@ async function pollProgress() {
     }
 }
 
-// Zobrazenie výsledku
-function showResult(data) {
+// Zobrazenie výsledkov batch kompresie
+function showBatchResults(data) {
     progressSection.style.display = 'none';
     resultSection.style.display = 'block';
     
     // Nastavenie štatistík
-    document.getElementById('originalSize').textContent = `${data.original_size.toFixed(2)} MB`;
-    document.getElementById('compressedSize').textContent = `${data.compressed_size.toFixed(2)} MB`;
-    document.getElementById('compressionRatio').textContent = `${data.compression_ratio.toFixed(1)}%`;
+    document.getElementById('totalProcessed').textContent = data.total_files;
+    document.getElementById('totalSuccess').textContent = data.completed;
+    document.getElementById('totalFailed').textContent = data.failed;
     
-    // Download tlačidlo
-    const downloadBtn = document.getElementById('downloadBtn');
-    downloadBtn.onclick = () => downloadFile(currentOutputFile);
+    // Vytvorenie zoznamu výsledkov pre každý súbor
+    const resultsFilesList = document.getElementById('resultsFilesList');
+    resultsFilesList.innerHTML = '';
+    
+    for (const jobId in data.files) {
+        const fileData = data.files[jobId];
+        const resultItem = document.createElement('div');
+        resultItem.className = 'result-file-item';
+        
+        if (fileData.status === 'completed') {
+            resultItem.innerHTML = `
+                <div class="result-file-header">
+                    <span class="result-file-icon">✓</span>
+                    <span class="result-file-name">${fileData.filename}</span>
+                </div>
+                <div class="result-file-stats">
+                    <span>${fileData.original_size.toFixed(2)} MB → ${fileData.compressed_size.toFixed(2)} MB</span>
+                    <span class="compression-badge">${fileData.compression_ratio.toFixed(1)}% zmenšenie</span>
+                </div>
+                <button class="btn-download" onclick="downloadFile('${fileData.output_file}')">
+                    Stiahnuť
+                </button>
+            `;
+            resultItem.classList.add('result-success');
+        } else if (fileData.status === 'error') {
+            resultItem.innerHTML = `
+                <div class="result-file-header">
+                    <span class="result-file-icon">✗</span>
+                    <span class="result-file-name">${fileData.filename}</span>
+                </div>
+                <div class="result-file-error">
+                    <span>${fileData.error || 'Neznáma chyba'}</span>
+                </div>
+            `;
+            resultItem.classList.add('result-error');
+        }
+        
+        resultsFilesList.appendChild(resultItem);
+    }
 }
 
 // Zobrazenie chyby
@@ -207,8 +318,9 @@ function downloadFile(filename) {
 
 // Reset uploadu
 function resetUpload() {
-    currentJobId = null;
-    currentOutputFile = null;
+    currentBatchId = null;
+    currentJobIds = [];
+    selectedFiles = [];
     
     // Reset UI
     uploadArea.style.display = 'block';
@@ -219,6 +331,10 @@ function resetUpload() {
     
     // Reset file input
     fileInput.value = '';
+    
+    // Clear files list
+    document.getElementById('filesList').innerHTML = '';
+    document.getElementById('resultsFilesList').innerHTML = '';
 }
 
 // Reset nastavení
