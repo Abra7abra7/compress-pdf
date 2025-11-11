@@ -85,7 +85,7 @@ python main.py
 
 ## 🌐 Web Verzia (Docker Deployment)
 
-**Živá demo**: http://compress-pdf.novis.eu (interná sieť Novis.eu)
+**Živá demo**: https://compress-pdf.novis.eu (interná sieť Novis.eu)
 
 ### Požiadavky
 - Linux server (Ubuntu 20.04+, Debian 11+, CentOS 8+)
