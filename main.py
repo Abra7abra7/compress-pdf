@@ -18,11 +18,11 @@ class PDFCompressorGUI:
         self.root.geometry("700x600")
         self.root.resizable(True, True)
         
-        # Premenné
+        # Premenné (predvolené hodnoty: DPI=150, Kvalita=85)
         self.input_dir = tk.StringVar()
         self.output_dir = tk.StringVar()
-        self.dpi = tk.IntVar(value=100)
-        self.jpeg_quality = tk.IntVar(value=75)
+        self.dpi = tk.IntVar(value=150)
+        self.jpeg_quality = tk.IntVar(value=85)
         self.is_processing = False
         
         self.setup_ui()
@@ -72,7 +72,7 @@ class PDFCompressorGUI:
             length=300
         )
         dpi_scale.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
-        self.dpi_label = ttk.Label(dpi_frame, text="100")
+        self.dpi_label = ttk.Label(dpi_frame, text="150")
         self.dpi_label.pack(side=tk.LEFT)
         dpi_scale.configure(command=self.update_dpi_label)
         
@@ -90,7 +90,7 @@ class PDFCompressorGUI:
             length=300
         )
         quality_scale.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
-        self.quality_label = ttk.Label(quality_frame, text="75")
+        self.quality_label = ttk.Label(quality_frame, text="85")
         self.quality_label.pack(side=tk.LEFT)
         quality_scale.configure(command=self.update_quality_label)
         

@@ -189,19 +189,19 @@ def compress_pdf(
             try:
                 original_dpi = get_pdf_dpi(input_path, poppler_path)
                 # Použijeme NIŽŠIE z dvoch hodnôt (nikdy nezvyšujeme DPI!)
-                target_dpi = 72  # Naša preferovaná hodnota
+                target_dpi = 150  # Zvýšené pre lepšiu čitateľnosť (predtým 72)
                 dpi = min(original_dpi, target_dpi)
                 
-                # Minimálne 50 DPI pre čitateľnosť
-                if dpi < 50:
-                    dpi = 50
+                # Minimálne 100 DPI pre čitateľnosť (predtým 50)
+                if dpi < 100:
+                    dpi = 100
             except:
-                # Ak detekcia zlyhá, použijeme konzervatívne 72 DPI
-                dpi = 72
+                # Ak detekcia zlyhá, použijeme 150 DPI pre dobrú čitateľnosť
+                dpi = 150
         
         # AUTO režim pre kvalitu
         if jpeg_quality == 0:  # 0 znamená auto
-            jpeg_quality = 60  # Nižšia kvalita = menší súbor
+            jpeg_quality = 85  # Vyššia kvalita pre čitateľnosť (predtým 60)
         
         # Konverzia PDF na obrázky
         if progress_callback:
@@ -340,16 +340,16 @@ def compress_pdf(
                 pass
             
             return False, (
-                f"⚠️ Kompresia by zväčšila súbor! "
-                f"Originál: {original_size:.2f} MB, "
+                f"[UPOZORNENIE] Kompresia by zvacsila subor! "
+                f"Original: {original_size:.2f} MB, "
                 f"Po kompresii: {compressed_size:.2f} MB. "
-                f"Tento PDF je už pravdepodobne dobre komprimovaný. "
-                f"Použite originálny súbor."
+                f"Tento PDF je uz pravdepodobne dobre komprimovany. "
+                f"Pouzite originalny subor."
             )
         
         compression_ratio = (1 - compressed_size / original_size) * 100
         
-        return True, f"Úspešne komprimované: {original_size:.2f} MB → {compressed_size:.2f} MB ({compression_ratio:.1f}% zmenšenie)"
+        return True, f"Uspesne komprimovane: {original_size:.2f} MB -> {compressed_size:.2f} MB ({compression_ratio:.1f}% zmensenie)"
     
     except Exception as e:
         import traceback
@@ -361,7 +361,7 @@ def compress_directory(
     input_dir: str,
     output_dir: Optional[str] = None,
     dpi: int = 150,
-    jpeg_quality: int = 75,
+    jpeg_quality: int = 85,
     progress_callback: Optional[callable] = None,
     log_callback: Optional[callable] = None
 ) -> dict:
@@ -401,32 +401,32 @@ def compress_directory(
     if log_callback:
         if poppler_installed:
             if poppler_path:
-                log_callback(f"✓ Poppler je nainštalovaný (lokálne): {poppler_path}")
+                log_callback(f"[OK] Poppler je nainstalovany (lokalne): {poppler_path}")
             else:
-                log_callback("✓ Poppler je nainštalovaný (v PATH)")
+                log_callback("[OK] Poppler je nainstalovany (v PATH)")
         else:
-            log_callback("✗ KRITICKÁ CHYBA: Poppler nie je nainštalovaný!")
+            log_callback("[CHYBA] KRITICKA CHYBA: Poppler nie je nainstalovany!")
             log_callback("=" * 60)
             for line in poppler_message.split('\n'):
                 log_callback(line)
             log_callback("=" * 60)
-            log_callback("Kompresia nebude fungovať bez Poppler!")
+            log_callback("Kompresia nebude fungovat bez Poppler!")
             log_callback("")
         
-        log_callback(f"Vyhľadávanie PDF súborov v: {input_dir}")
-        log_callback(f"Našlo sa {len(pdf_files)} PDF súborov:")
+        log_callback(f"Vyhladavanie PDF suborov v: {input_dir}")
+        log_callback(f"Naslo sa {len(pdf_files)} PDF suborov:")
         for pdf_file in pdf_files[:10]:  # Zobrazíme prvých 10
             log_callback(f"  - {pdf_file.name} ({pdf_file.parent})")
         if len(pdf_files) > 10:
-            log_callback(f"  ... a ďalších {len(pdf_files) - 10} súborov")
+            log_callback(f"  ... a dalsich {len(pdf_files) - 10} suborov")
         
         # Informácia o img2pdf
         if IMG2PDF_AVAILABLE:
-            log_callback(f"✓ img2pdf je dostupný - použije sa pre lepšiu kompresiu")
+            log_callback(f"[OK] img2pdf je dostupny - pouzije sa pre lepsiu kompresiu")
         else:
-            log_callback(f"⚠ UPOZORNENIE: img2pdf nie je nainštalovaný!")
-            log_callback(f"  Nainštalujte ho: pip install img2pdf")
-            log_callback(f"  Použije sa PIL Image.save() (môže mať problémy)")
+            log_callback(f"[UPOZORNENIE] img2pdf nie je nainstalovany!")
+            log_callback(f"  Nainstalovanie: pip install img2pdf")
+            log_callback(f"  Pouzije sa PIL Image.save() (moze mat problemy)")
     
     if len(pdf_files) == 0:
         if log_callback:
@@ -486,9 +486,9 @@ def compress_directory(
             
             if log_callback:
                 if success:
-                    log_callback(f"✓ {message}")
+                    log_callback(f"[OK] {message}")
                 else:
-                    log_callback(f"✗ CHYBA: {message}")
+                    log_callback(f"[CHYBA] {message}")
         
         except Exception as e:
             import traceback
@@ -500,7 +500,7 @@ def compress_directory(
                 'message': error_msg
             })
             if log_callback:
-                log_callback(f"✗ VÝNIMKA: {error_msg}")
+                log_callback(f"[VYNIMKA] {error_msg}")
     
     return results
 

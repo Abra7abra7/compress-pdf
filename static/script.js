@@ -337,13 +337,13 @@ function resetUpload() {
     document.getElementById('resultsFilesList').innerHTML = '';
 }
 
-// Reset nastavení
+// Reset nastavení (predvolené: DPI=150, Kvalita=85)
 function resetSettings() {
     autoMode.checked = true;
-    dpiRange.value = 100;
-    qualityRange.value = 75;
-    dpiValue.textContent = '100';
-    qualityValue.textContent = '75';
+    dpiRange.value = 150;
+    qualityRange.value = 85;
+    dpiValue.textContent = '150';
+    qualityValue.textContent = '85';
     dpiRange.disabled = true;
     qualityRange.disabled = true;
     dpiRange.parentElement.style.opacity = '0.6';

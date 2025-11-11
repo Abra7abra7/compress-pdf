@@ -96,10 +96,10 @@ def upload_file():
         if not allowed_file(file.filename):
             return jsonify({'error': f'Súbor {file.filename} nie je PDF. Povolené sú len PDF súbory'}), 400
     
-    # Získanie parametrov
+    # Získanie parametrov (predvolené hodnoty: DPI=150, Kvalita=85)
     try:
-        dpi = int(request.form.get('dpi', 100))
-        jpeg_quality = int(request.form.get('quality', 75))
+        dpi = int(request.form.get('dpi', 150))
+        jpeg_quality = int(request.form.get('quality', 85))
         
         # Validácia parametrov (0 = auto režim)
         if dpi != 0 and not (100 <= dpi <= 200):
